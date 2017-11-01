@@ -18,4 +18,20 @@ node_types:
       - external-database: tosca.capabilities.Endpoint
       - gmail-api-url: tosca.capabilities.Endpoint
      
+policy_types:
+  tosca.policies.Security.Authorization:
+    derived_from: tosca.policies.Security
+    description: authorization policy derived from security
 
+  tosca.policies.Scaling.Performance:
+    derived_from: tosca.policies.Scaling
+    description: Performance policy derived from scaling
+
+  tosca.policies.Deployment.Ressource:
+    derived_from: tosca.policies.Deployment
+    description: Ressource policy derived from Deployment 
+
+  tosca.policies.Execution.Schedule:
+    derived_from: tosca.policies.Execution
+    description: Schedule policy derived from Execution
+    

@@ -81,7 +81,7 @@ topology_template:
 
   policies:
     - afa.application.scalability:
-        type: tosca.policies.Scaling
+        type: tosca.policies.Scaling.Performance
         description: spins one instance when the threshold connection is reached
         properties:
           property_target:
@@ -114,7 +114,7 @@ topology_template:
             property_type: integer
     
     - application.authorization:
-        type: tosca.policies.Root
+        type: tosca.policies.Security.Authorization
         description: requires connection to Remote Autorization Service 
         properties:
           property_target:
@@ -147,7 +147,7 @@ topology_template:
             property_type: string
 
     - cache.service.application.Scalability:
-        type: tosca.policies.Scaling
+        type: tosca.policies.Scaling.Performance
         description: spins one instance when the estimated of completion time is above threshold
         properties:
           property_target:
@@ -180,7 +180,7 @@ topology_template:
             property_type: time
 
     - application.execution.time:
-        type: tosca.policies.Root
+        type: tosca.policies.Execution.Schedule
         description: executes the application following a cron job like syntax
         properties:
           property_target:
@@ -201,7 +201,7 @@ topology_template:
             property_type: string
 
     - container.resource.deployment.requirements:
-        type: tosca.policies.Placement
+        type: tosca.policies.Deployment.Ressource
         description: defines the minimum requirements for the container 
         properties:
           property_target:
@@ -230,7 +230,7 @@ topology_template:
             property_type: integer
 
     - cacheservice.connection.deployment.requirement:
-        type: tosca.policies.Placement
+        type: tosca.policies.Deployment.Ressource
         description: defines the connection requirements for the container 
         properties:
           property_target:
@@ -267,7 +267,7 @@ topology_template:
             property_value: http://some_gmail_api_url
 
     - afa.connection.deployment.requirement:
-        type: tosca.policies.Placement
+        type: tosca.policies.Deployment.Ressource
         description: defines the connection requirements for the container
         properties:
           property_target:
