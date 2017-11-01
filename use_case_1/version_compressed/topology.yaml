@@ -1,0 +1,299 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports:
+  - audience_finder.yaml
+
+repositories:
+  docker_hub: https://registry.hub.docker.com/
+
+description: Template with requirements against hosting infrastructure.
+ 
+topology_template:
+ 
+  node_templates:
+    CachingService:
+      type: tosca.nodes.Container.Application.Docker.CachingService
+      requirements:
+        - host:
+            node_filter:
+              capabilities:
+                - host:
+                   properties:
+                    - num_cpus: { in_range: [ min, max ] } 
+                    - mem_size: { in_range: [ min, max ] }
+                    - disk_size: { in_range: [ min, max ] }
+        - wordpress-database: 
+            node_filter:
+              capabilities:
+                - host: 
+                    properties:
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_1,  property_value ] }
+        - boxoffice-database:
+            node_filter:
+              capabilities:
+                - host:
+                    properties:
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_2,  property_value ] }
+        - external-database:
+             node_filter:
+               capabilities:
+                 - host:
+                     properties:
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_3,  property_value ] }
+        - gmail-api-url:
+             node_filter:
+               capabilities:
+                 - host:
+                     properties:
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_4,  property_value ] }
+                 
+      artifacts:
+        file: CachingService
+        type: tosca.artifacts.Deployment.Image.Container.Docker
+        repository: docker_hub
+
+    AudienceFinder:
+      type: tosca.nodes.Container.Application.Docker.AFA
+      requirements:
+        - proxy:
+            node_filter:
+              capabilities:
+                - host:
+                    properties:
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_1,  property_value ] }
+        - boxoffice-database:
+            node_filter:
+              capabilities:
+                - host:
+                    properties:
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_2,  property_value ] }
+        - wordpress-database:
+            node_filter:
+              capabilities:
+                - host:
+                    properties:
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_3,  property_value ] }
+        
+      artifacts:
+        file: AFA
+        type: tosca.artifacts.Deployment.Image.Container.Docker
+        repository: docker_hub  
+
+  policies:
+    - afa.application.scalability:
+        type: tosca.policies.Scaling.Performance
+        description: spins one instance when the threshold connection is reached
+        properties:
+          property_target:
+            property_name: Application, Service, Resource
+            property_description: The levels that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: execution
+            property_description: The stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          property_trigger_1_ID:
+            property_name: connection threshold
+            property_description: defines the trigger (threshold that will spin up/down the instances)
+            property_type: string
+          property_trigger_1_Namespace:
+            property_name: connection meter
+            property_description: defines the namespace of the service that is monitoring the connections 
+            property_type: string
+          specific_parameter_1:
+            property_name: max connections
+            property_description: defines the maximum defines the maximum number of connections above which the new instance will be deployed 
+            property_type: integer
+          specific_parameter_2:
+            property_name: min connections
+            property_description: defines the minimum number of connections above wich the new instance will be deployed
+            property_type: integer
+    
+    - application.authorization:
+        type: tosca.policies.Security.Authorization
+        description: requires connection to Remote Autorization Service 
+        properties:
+          property_target:
+            property_name: Application, Resource
+            property_description: The levels that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: service address
+            property_description: define the url of the remote authorization service
+            property_type: url
+          specific_parameter_2:
+            property_name: service port
+            property_description: defines the port of the remote aythorization Service 
+            property_type: integer
+          specific_parameter_3:
+            property_name: service protocol
+            property_description: defines the connection protocol of the remote Authorization Service
+            property_type: string
+          specific_parameter_4:
+            property_name: service name
+            property_description: defines the name of the remote Autorization Service
+            property_type: string
+
+    - cache.service.application.Scalability:
+        type: tosca.policies.Scaling.Performance
+        description: spins one instance when the estimated of completion time is above threshold
+        properties:
+          property_target:
+            property_name: Application, Service, Resource
+            property_description: The levels that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: execution
+            property_description: The stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          property_trigger_1_ID:
+            property_name: estimated completion time
+            property_description: defines the trigger (threshold that will spin up/down the instances)
+            property_type: time
+          property_trigger_1_Namespace:
+            property_name: cache server
+            property_description: defines the namespace of the service that is monitoring the number of queries that must be executed 
+            property_type: string
+          specific_parameter_1:
+            property_name: max estimated time of completion
+            property_description: defines the latest time of completion above which the new instance will be deployed 
+            property_type: time
+          specific_parameter_2:
+            property_name: min estimated time of completion
+            property_description: defines the earliest time of completion under which the new instance will be undeployed
+            property_type: time
+
+    - application.execution.time:
+        type: tosca.policies.Execution.Schedule
+        description: executes the application following a cron job like syntax
+        properties:
+          property_target:
+            property_name: Application, Service, Container
+            property_description: the node that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: execution
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: cron-job arg
+            property_description: a cron-job like argument list
+            property_type: string
+
+    - container.resource.deployment.requirements:
+        type: tosca.policies.Deployment.Ressource
+        description: defines the minimum requirements for the container 
+        properties:
+          property_target:
+            property_name: container
+            property_description: the container that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: min cpu
+            property_description: the minimum number of cpus 
+            property_type: integer
+          specific_parameter_2:
+            property_name: min ram
+            property_description: the minimum amount of Memory  
+            property_type: integer
+          specific_parameter_3:
+            property_name: min disk
+            property_description: the minimum size of disk
+            property_type: integer
+
+    - cacheservice.connection.deployment.requirement:
+        type: tosca.policies.Deployment.Ressource
+        description: defines the connection requirements for the container 
+        properties:
+          property_target:
+            property_name: Resource
+            property_description: the container that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_external_box_office_database_url
+          specific_parameter_3:
+            property_name: external_database_url
+            property_description: the url of the external_database that must be reachable
+            property_type: url
+            property_value: http://some_external_database_url
+          specific_parameter_4:
+            property_name: Gmail_API_url
+            property_description: the url of the Gmail_API that must be reachable
+            property_type: url
+            property_value: http://some_gmail_api_url
+
+    - afa.connection.deployment.requirement:
+        type: tosca.policies.Deployment.Ressource
+        description: defines the connection requirements for the container
+        properties:
+          property_target:
+            property_name: Resource
+            property_description: the container that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_box_office_database_url
+          specific_parameter_3:
+            property_name: proxy_url
+            property_description: the url of the poxy that must be reachable
+            property_type: url
+            property_value: http://some_proxy/
