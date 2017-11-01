@@ -69,25 +69,26 @@ topology_template:
               capabilities:
                 - host: 
                     properties:
-                       - url_path: { get_input: Word_Press_url }
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_1,  property_value ] }
+
         - boxoffice-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                       - url_path: { get_input: Box_Office_url }
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_2,  property_value ] }
         - external-database:
              node_filter:
                capabilities:
                  - host:
                      properties:
-                        - url_path: { get_input: external_database_url }
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_3,  property_value ] }
         - gmail-api-url:
              node_filter:
                capabilities:
                  - host:
                      properties:
-                        - url_path: { get_input: Gmail_API_url }
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_4,  property_value ] }
                  
         - wordpress:
             node: WordPress_for_Caching
@@ -127,19 +128,19 @@ topology_template:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: proxy_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_1,  property_value ] }
         - boxoffice-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: Box_Office_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_2,  property_value ] }
         - wordpress-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: Word_Press_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_3,  property_value ] }
         - wordpress:
             node: WordPress_for_Caching
             relationship: my_connection
@@ -152,6 +153,7 @@ topology_template:
         Configure:
           inputs:
             targ_notify_port: "some port"
+
   policies:
     - afa.application.scalability:
         type: tosca.policies.Scaling
@@ -160,7 +162,7 @@ topology_template:
           property_target:
             property_name: Application, Service, Resource
             property_description: The levels that will be affected by the policy
-            property_type: AudienceFinder
+            property_type: tosca.nodes
           property_stage:
             property_name: execution
             property_description: The stage that will be affected by the policy
@@ -175,25 +177,26 @@ topology_template:
             property_type: string
           property_trigger_1_Namespace:
             property_name: connection meter
-            property_description: defines the namespace of the service that is monitoring the connections 
+            property_description: defines the namespace of the service that is monitoring the connections
             property_type: string
           specific_parameter_1:
             property_name: max connections
-            property_description: defines the maximum defines the maximum number of connections above which the new instance will be deployed 
+            property_description: defines the maximum defines the maximum number of connections above which the new instance will be deployed
             property_type: integer
           specific_parameter_2:
             property_name: min connections
             property_description: defines the minimum number of connections above wich the new instance will be deployed
             property_type: integer
-    
+
+
     - application.authorization:
         type: tosca.policies.Root
-        description: requires connection to Remote Autorization Service 
+        description: requires connection to Remote Autorization Service
         properties:
           property_target:
             property_name: Application, Resource
             property_description: The levels that will be affected by the policy
-            property_type: CachingService
+            property_type: tosca.nodes
           property_stage:
             property_name: deployment
             property_description: the stage that will be affected by the policy
@@ -208,7 +211,7 @@ topology_template:
             property_type: url
           specific_parameter_2:
             property_name: service port
-            property_description: defines the port of the remote aythorization Service 
+            property_description: defines the port of the remote aythorization Service
             property_type: integer
           specific_parameter_3:
             property_name: service protocol
@@ -226,7 +229,7 @@ topology_template:
           property_target:
             property_name: Application, Service, Resource
             property_description: The levels that will be affected by the policy
-            property_type: CachingService
+            property_type: tosca.nodes
           property_stage:
             property_name: execution
             property_description: The stage that will be affected by the policy
@@ -241,11 +244,11 @@ topology_template:
             property_type: time
           property_trigger_1_Namespace:
             property_name: cache server
-            property_description: defines the namespace of the service that is monitoring the number of queries that must be executed 
+            property_description: defines the namespace of the service that is monitoring the number of queries that must be executed
             property_type: string
           specific_parameter_1:
             property_name: max estimated time of completion
-            property_description: defines the latest time of completion above which the new instance will be deployed 
+            property_description: defines the latest time of completion above which the new instance will be deployed
             property_type: time
           specific_parameter_2:
             property_name: min estimated time of completion
@@ -259,7 +262,7 @@ topology_template:
           property_target:
             property_name: Application, Service, Container
             property_description: the node that will be affected by the policy
-            property_type: CachingService
+            property_type: tosca.nodes
           property_stage:
             property_name: execution
             property_description: the stage that will be affected by the policy
@@ -275,12 +278,12 @@ topology_template:
 
     - container.resource.deployment.requirements:
         type: tosca.policies.Placement
-        description: defines the minimum requirements for the container 
+        description: defines the minimum requirements for the container
         properties:
           property_target:
             property_name: container
             property_description: the container that will be affected by the policy
-            property_type: Container_for_Caching
+            property_type: tosca.nodes
           property_stage:
             property_name: deployment
             property_description: the stage that will be affected by the policy
@@ -291,25 +294,25 @@ topology_template:
             property_type: integer
           specific_parameter_1:
             property_name: min cpu
-            property_description: the minimum number of cpus 
+            property_description: the minimum number of cpus
             property_type: integer
           specific_parameter_2:
             property_name: min ram
-            property_description: the minimum amount of Memory  
+            property_description: the minimum amount of Memory
             property_type: integer
           specific_parameter_3:
             property_name: min disk
             property_description: the minimum size of disk
             property_type: integer
 
-    - container.connection.deployment.requirement:
+    - cacheservice.connection.deployment.requirement:
         type: tosca.policies.Placement
-        description: defines the connection requirements for the container 
+        description: defines the connection requirements for the container
         properties:
           property_target:
             property_name: Resource
             property_description: the container that will be affected by the policy
-            property_type: Container_for_Caching, Container_for_AFA
+            property_type: tosca.nodes
           property_stage:
             property_name: deployment
             property_description: the stage that will be affected by the policy
@@ -319,7 +322,56 @@ topology_template:
             property_description: the priority with which the policy will be executed
             property_type: integer
           specific_parameter_1:
-            property_name: list of urls
-            property_description: the list of urls that must be reachable
-            property_type: list
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_external_box_office_database_url
+          specific_parameter_3:
+            property_name: external_database_url
+            property_description: the url of the external_database that must be reachable
+            property_type: url
+            property_value: http://some_external_database_url
+          specific_parameter_4:
+            property_name: Gmail_API_url
+            property_description: the url of the Gmail_API that must be reachable
+            property_type: url
+            property_value: http://some_gmail_api_url
+
+    - afa.connection.deployment.requirement:
+        type: tosca.policies.Placement
+        description: defines the connection requirements for the container
+        properties:
+          property_target:
+            property_name: Resource
+            property_description: the container that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_box_office_database_url
+          specific_parameter_3:
+            property_name: proxy_url
+            property_description: the url of the poxy that must be reachable
+            property_type: url
+            property_value: http://some_proxy/
+
 
