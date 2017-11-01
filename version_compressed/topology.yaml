@@ -9,22 +9,6 @@ repositories:
 description: Template with requirements against hosting infrastructure.
  
 topology_template:
-  inputs:
-    proxy_url:
-      type: string
-      description: endpoint for the proxy
-    external_database_url:
-      type: string
-      description: enpoint for the external database connected to the caching service
-    Word_Press_url:
-      type: string
-      description: endpoint for the WordPress database
-    Box_Office_url:
-      type: string
-      description: endpoint for the box office database
-    Gmail_API_url:
-      type: string
-      description: endpoint to connect to the gmail API url
  
   node_templates:
     CachingService:
@@ -43,25 +27,25 @@ topology_template:
               capabilities:
                 - host: 
                     properties:
-                       - url_path: { get_input: Word_Press_url }
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_1,  property_value ] }
         - boxoffice-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                       - url_path: { get_input: Box_Office_url }
+                       - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_2,  property_value ] }
         - external-database:
              node_filter:
                capabilities:
                  - host:
                      properties:
-                        - url_path: { get_input: external_database_url }
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_3,  property_value ] }
         - gmail-api-url:
              node_filter:
                capabilities:
                  - host:
                      properties:
-                        - url_path: { get_input: Gmail_API_url }
+                        - url_path: { get_property: [ cacheservice.connection.deployment.requirement, specific_parameter_4,  property_value ] }
                  
       artifacts:
         file: CachingService
@@ -76,19 +60,19 @@ topology_template:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: proxy_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_1,  property_value ] }
         - boxoffice-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: Box_Office_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_2,  property_value ] }
         - wordpress-database:
             node_filter:
               capabilities:
                 - host:
                     properties:
-                      - url_path: { get_input: Word_Press_url }
+                      - url_path: { get_property: [ afa.connection.deployment.requirement, specific_parameter_3,  property_value ] }
         
       artifacts:
         file: AFA
@@ -245,7 +229,7 @@ topology_template:
             property_description: the minimum size of disk
             property_type: integer
 
-    - container.connection.deployment.requirement:
+    - cacheservice.connection.deployment.requirement:
         type: tosca.policies.Placement
         description: defines the connection requirements for the container 
         properties:
@@ -262,7 +246,54 @@ topology_template:
             property_description: the priority with which the policy will be executed
             property_type: integer
           specific_parameter_1:
-            property_name: list of urls
-            property_description: the list of urls that must be reachable
-            property_type: list
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_external_box_office_database_url
+          specific_parameter_3:
+            property_name: external_database_url
+            property_description: the url of the external_database that must be reachable
+            property_type: url
+            property_value: http://some_external_database_url
+          specific_parameter_4:
+            property_name: Gmail_API_url
+            property_description: the url of the Gmail_API that must be reachable
+            property_type: url
+            property_value: http://some_gmail_api_url
 
+    - afa.connection.deployment.requirement:
+        type: tosca.policies.Placement
+        description: defines the connection requirements for the container
+        properties:
+          property_target:
+            property_name: Resource
+            property_description: the container that will be affected by the policy
+            property_type: tosca.nodes
+          property_stage:
+            property_name: deployment
+            property_description: the stage that will be affected by the policy
+            property_type: string
+          property_priority:
+            property_name: 100
+            property_description: the priority with which the policy will be executed
+            property_type: integer
+          specific_parameter_1:
+            property_name: Word_Press_url
+            property_description: the url of the Word_Press database that must be reachable
+            property_type: url
+            property_value: http://some_word_press_database_url
+          specific_parameter_2:
+            property_name: Box_Office_url
+            property_description: the url of the Box_Office database that must be reachable
+            property_type: url
+            property_value: http://some_box_office_database_url
+          specific_parameter_3:
+            property_name: proxy_url
+            property_description: the url of the poxy that must be reachable
+            property_type: url
+            property_value: http://some_proxy/
